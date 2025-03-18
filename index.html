@@ -1,1 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Código - BGP</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 800px;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .form-field {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #357ae8;
+    }
+    pre {
+      background: #272822;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Código - BGP</h1>
+  <form id="dataForm">
+    <div class="form-field">
+      <label for="nomeDoCliente">[NOME DO CLIENTE]</label>
+      <input type="text" id="nomeDoCliente" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv4DoBGP">[IPV4 DO BGP]</label>
+      <input type="text" id="ipv4DoBGP" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv4DoBGPPlus1">[IPV4 DO BGP+1]</label>
+      <input type="text" id="ipv4DoBGPPlus1" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv4DoBGPPlus2">[IPV4 DO BGP+2]</label>
+      <input type="text" id="ipv4DoBGPPlus2" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv6DoBGP">[IPV6 DO BGP]</label>
+      <input type="text" id="ipv6DoBGP" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv6DoBGPPlus1">[IPV6 DO BGP+1]</label>
+      <input type="text" id="ipv6DoBGPPlus1" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv6DoBGPLadoTuddo">[IPV6 DO BGP LADO TUDDO]</label>
+      <input type="text" id="ipv6DoBGPLadoTuddo" required>
+    </div>
+    <div class="form-field">
+      <label for="blocoDoCliente">[BLOCO DO CLIENTE]</label>
+      <input type="text" id="blocoDoCliente" required>
+    </div>
+    <div class="form-field">
+      <label for="barramentoDoCliente">[BARRAMENTO DO CLIENTE]</label>
+      <input type="text" id="barramentoDoCliente" required>
+    </div>
+    <div class="form-field">
+      <label for="blocoIpv6DoCliente">[BLOCO IPV6 DO CLIENTE]</label>
+      <input type="text" id="blocoIpv6DoCliente" required>
+    </div>
+    <div class="form-field">
+      <label for="barramentoIpv6DoCliente">[BARRAMENTO IPV6 DO CLIENTE]</label>
+      <input type="text" id="barramentoIpv6DoCliente" required>
+    </div>
+    <div class="form-field">
+      <label for="asCliente">[AS CLIENTE]</label>
+      <input type="text" id="asCliente" required>
+    </div>
+    <div class="form-field">
+      <label for="ipv4DoBGPPlus2SeparadoPor">[IPV4 DO BGP+2 SEPARADO POR :]</label>
+      <input type="text" id="ipv4DoBGPPlus2SeparadoPor" required>
+    </div>
+    <button type="submit">Gerar Código</button>
+  </form>
+
+  <h2>Código Gerado:</h2>
+  <pre id="result"></pre>
+
+  <script>
+    // Template com os placeholders
+    const template = `VLAN 3231 [NOME DO CLIENTE] IP
+V4 [IPV4 DO BGP]/30
+TUDDO [IPV4 DO BGP+1]
+[NOME DO CLIENTE] [IPV4 DO BGP+2]
+V6\t[IPV6 DO BGP]/64 
+TUDDO \t[IPV6 DO BGP+1]
+[NOME DO CLIENTE] [IPV6 DO BGP]:[IPV4 DO BGP+2 SEPARADO POR :]
+
+--------------------------------------------
+interface Vlanif3231
+ description Cust: [NOME DO CLIENTE]-IP {GRI/IP/0002}
+ ipv6 enable
+ ip address [IPV6 DO BGP+1] 255.255.255.252
+ ipv6 address [IPV6 DO BGP ]1/64
+ statistic enable both
+
+
+vlan 3231
+ description [NOME DO CLIENTE]-IP
+
+
+ip ip-prefix [NOME DO CLIENTE]-IP permit [BLOCO DO CLIENTE] [BARRAMENTO DO CLIENTE] greater-equal [BARRAMENTO DO CLIENTE] less-equal 24
+
+ip ipv6-prefix [NOME DO CLIENTE]-IP-IPV6 permit [BLOCO IPV6 DO CLIENTE] [BARRAMENTO IPV6 DO CLIENTE] greater-equal [BARRAMENTO IPV6 DO CLIENTE] less-equal 48
+
+
+
+#
+route-policy IN-IPV4-[NOME DO CLIENTE]-IP permit node 200
+ if-match ip-prefix [NOME DO CLIENTE]-IP
+ apply local-preference 1000
+ apply community 65534:1010
+#
+route-policy IN-IPV4-[NOME DO CLIENTE]-IP deny node 10000
+
+
+
+#
+route-policy OUT-IPV4-[NOME DO CLIENTE]-IP deny node 50
+ if-match ip-prefix RFC-5735
+#
+route-policy OUT-IPV4-[NOME DO CLIENTE]-IP deny node 60
+ if-match ip-prefix RFC-6598
+#
+route-policy OUT-IPV4-[NOME DO CLIENTE]-IP permit node 100
+ if-match ip-prefix DEFAULT
+ apply community none
+#
+route-policy OUT-IPV4-[NOME DO CLIENTE]-IP permit node 200
+ if-match community-filter CLIENTES
+ apply community none
+#
+route-policy OUT-IPV4-[NOME DO CLIENTE]-IP deny node 10000
+
+
+
+#
+route-policy IN-IPV6-[NOME DO CLIENTE]-IP permit node 100
+ if-match ipv6 address prefix-list [NOME DO CLIENTE]-IP-IPV6
+ apply local-preference 1000
+ apply community 65534:1010
+#
+route-policy IN-IPV6-[NOME DO CLIENTE]-IP deny node 10000
+
+
+
+#
+route-policy OUT-IPV6-[NOME DO CLIENTE]-IP permit node 100
+ if-match ipv6 address prefix-list DEFAULT
+#
+route-policy OUT-IPV6-[NOME DO CLIENTE]-IP deny node 10000
+#
+
+
+
+bgp 268696
+ peer [IPV4 DO BGP+1] as-number [AS CLIENTE]
+ peer [IPV4 DO BGP+1] description [NOME DO CLIENTE]-IP
+ peer [IPV6 DO BGP LADO TUDDO ] as-number [AS CLIENTE]
+ peer [IPV6 DO BGP LADO TUDDO ] description [NOME DO CLIENTE]-IP-v6
+
+
+ ipv4-family unicast
+
+  peer [IPV4 DO BGP+1] enable
+  peer [IPV4 DO BGP+1] route-policy IN-IPV4-[NOME DO CLIENTE]-IP import
+  peer [IPV4 DO BGP+1] route-policy OUT-IPV4-[NOME DO CLIENTE]-IP export
+  peer [IPV4 DO BGP+1] route-limit 50
+  peer [IPV4 DO BGP+1] advertise-community
+
+ ipv6-family unicast
+
+
+  peer [IPV6 DO BGP LADO TUDDO ] enable
+  peer [IPV6 DO BGP LADO TUDDO ] route-policy IN-IPV6-[NOME DO CLIENTE]-IP import
+  peer [IPV6 DO BGP LADO TUDDO ] route-policy OUT-IPV6-[NOME DO CLIENTE]-IP export
+  peer [IPV6 DO BGP LADO TUDDO ] route-limit 60
+  peer [IPV6 DO BGP LADO TUDDO ] next-hop-local
+  peer [IPV6 DO BGP LADO TUDDO ] advertise-community`;
+
+    document.getElementById('dataForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Captura os valores dos campos
+      const nomeDoCliente = document.getElementById('nomeDoCliente').value;
+      const ipv4DoBGP = document.getElementById('ipv4DoBGP').value;
+      const ipv4DoBGPPlus1 = document.getElementById('ipv4DoBGPPlus1').value;
+      const ipv4DoBGPPlus2 = document.getElementById('ipv4DoBGPPlus2').value;
+      const ipv6DoBGP = document.getElementById('ipv6DoBGP').value;
+      const ipv6DoBGPPlus1 = document.getElementById('ipv6DoBGPPlus1').value;
+      const ipv6DoBGPLadoTuddo = document.getElementById('ipv6DoBGPLadoTuddo').value;
+      const blocoDoCliente = document.getElementById('blocoDoCliente').value;
+      const barramentoDoCliente = document.getElementById('barramentoDoCliente').value;
+      const blocoIpv6DoCliente = document.getElementById('blocoIpv6DoCliente').value;
+      const barramentoIpv6DoCliente = document.getElementById('barramentoIpv6DoCliente').value;
+      const asCliente = document.getElementById('asCliente').value;
+      const ipv4DoBGPPlus2SeparadoPor = document.getElementById('ipv4DoBGPPlus2SeparadoPor').value;
+
+      // Realiza as substituições no template
+      let result = template;
+      result = result.replace(/\[NOME DO CLIENTE\]/g, nomeDoCliente);
+      result = result.replace(/\[IPV4 DO BGP\]/g, ipv4DoBGP);
+      result = result.replace(/\[IPV4 DO BGP\+1\]/g, ipv4DoBGPPlus1);
+      result = result.replace(/\[IPV4 DO BGP\+2\]/g, ipv4DoBGPPlus2);
+      // Para [IPV6 DO BGP] pode haver variação (com ou sem espaço antes do ])
+      result = result.replace(/\[IPV6 DO BGP\]\s?/g, ipv6DoBGP);
+      result = result.replace(/\[IPV6 DO BGP\+1\]/g, ipv6DoBGPPlus1);
+      result = result.replace(/\[IPV6 DO BGP LADO TUDDO \]/g, ipv6DoBGPLadoTuddo);
+      result = result.replace(/\[BLOCO DO CLIENTE\]/g, blocoDoCliente);
+      result = result.replace(/\[BARRAMENTO DO CLIENTE\]/g, barramentoDoCliente);
+      result = result.replace(/\[BLOCO IPV6 DO CLIENTE\]/g, blocoIpv6DoCliente);
+      result = result.replace(/\[BARRAMENTO IPV6 DO CLIENTE\]/g, barramentoIpv6DoCliente);
+      result = result.replace(/\[AS CLIENTE\]/g, asCliente);
+      result = result.replace(/\[IPV4 DO BGP\+2 SEPARADO POR :\]/g, ipv4DoBGPPlus2SeparadoPor);
+
+      // Exibe o resultado
+      document.getElementById('result').textContent = result;
+    });
+  </script>
+</body>
+</html>
 
